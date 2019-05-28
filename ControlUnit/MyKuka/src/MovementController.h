@@ -60,11 +60,11 @@ public:
 
 	string readSerial();
 
-	bool setTargetPosition(FullPosition fp);
+	bool setTargetPosition(FullPosition targetPos, bool gripperClosed=false);
 
 	bool moveHome();
 
-	bool initBlockGrab(FullPosition pos);
+	bool initBlockGrab(FullPosition pos, double angle);
 
 	void generateCalibTargetFile(string fileName="res/calibTargets.txt");
 
@@ -73,7 +73,7 @@ private:
 	vector<FullPosition> angleJumpPosFiller(JointAngles target, JointAngles current, int pos);
 	bool angleJumpCheck(JointAngles target, JointAngles current, int& idx);
 	vector<FullPosition> setTrajectorySimple(FullPosition target, FullPosition current);
-	vector<FullPosition> setTrajectoryAngles(FullPosition target, FullPosition current);
+	vector<FullPosition> setTrajectoryAngles(FullPosition target, FullPosition current, bool gripperClosed=false);
 	double calcBezierValue(double a, double supportA, double b, double supportB, double t);
 	bool sendPosition(FullPosition data);
 	vector<int>  sendPositions(vector<FullPosition> _data);
@@ -81,6 +81,8 @@ private:
 	FullPosition currentPos;
 	void calcCircleCoords(int cx, int cy, int radius, int step, double *_y, double *_z);
 	bool sendResult();
+	bool placeOperation();
+
 
 //	bool sendResultTimeout();
 

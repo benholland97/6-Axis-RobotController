@@ -56,6 +56,12 @@ bool almostEqual(double a, double b, double precision) {
 		return (fabs((a/b)-1.0) < precision);
 }
 
+void almostZeroFix(double* arr, double length, double precision){
+	for(int i=0; i<length; ++i) {
+		almostZeroFix(arr[i],precision);
+	}
+}
+
 bool almostZeroFix(double& a, double precision) {
 	if(fabs(a) < precision) {
 		a = 0;
@@ -63,6 +69,8 @@ bool almostZeroFix(double& a, double precision) {
 	}
 	return false;
 }
+
+
 
 void almostZeroFix(Matrix& m, double precision) {
 	for(int i=0; i<(int)m.rowno(); ++i) {

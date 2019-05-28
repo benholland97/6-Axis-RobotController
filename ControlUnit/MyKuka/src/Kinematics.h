@@ -100,7 +100,7 @@ public:
 
 	void calcFK(FullPosition& fp);
 
-	bool calcIK(FullPosition& fp, bool setAngles = true);
+	bool calcIK(FullPosition& fp, bool print = false, bool setAngles = true);
 
 	JointAngles getCurrentJointAngles();
 

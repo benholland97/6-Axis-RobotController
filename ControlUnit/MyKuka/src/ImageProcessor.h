@@ -52,8 +52,9 @@ struct RectWithType {
 };
 
 struct TrackbarJointAngleData {
+	TrackbarJointAngleData():isReady(false){};
 	double angles[NO_ACTUATORS];// = {MG90S_MAX_ANGLE,MG90S_MAX_ANGLE,MG90S_MAX_ANGLE,MG90S_MAX_ANGLE,MG90S_MAX_ANGLE,MG90S_MAX_ANGLE};
-	bool isReady = false;
+	bool isReady;
 	void setAngle(int num, int val) {
 		if(num >= 0 && num < NO_ACTUATORS) {
 			int offset = MG90S_MAX_ANGLE;
@@ -150,7 +151,7 @@ private:
 
 	bool minSizeRectCheck(RotatedRect temp, double pWidth, double pDepth);
 
-	bool squareCheck(RectWithType rect, int tolerance = BLOCK_TOLERANCE*0.25);
+	bool squareCheck(RectWithType rect, int tolerance = BLOCK_TOLERANCE*0.4);
 
 	vector<Point2f> calcIdealBlockFacesImg(double& pWidth, double& pHeight, double& pDepth, double blockWidth= BLOCK_WIDTH, double blockHeight=BLOCK_LENGTH, double blockDepth=BLOCK_DEPTH);
 

@@ -44,6 +44,7 @@ double toDegrees(double radians);
 double* toDegrees(double* radArr, int size);
 bool almostEqual(double a, double b, double precision);
 bool almostZeroFix(double& a, double precision);
+void almostZeroFix(double* arr, double length, double precision);
 void almostZeroFix(Matrix& m, double precision);
 double hypotenuseLength(double a, double b);
 double distanceBetweenTwoPoints(double ax, double ay, double bx, double by);

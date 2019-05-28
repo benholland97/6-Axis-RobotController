@@ -132,10 +132,10 @@ void MovementController::calcCircleCoords(int c1, int c2, int radius, int step, 
 	}
 }
 
-bool MovementController::setTargetPosition(FullPosition targetPos){
+bool MovementController::setTargetPosition(FullPosition targetPos, bool gripperClosed){
 //	cout<<targetPos<<endl;
 	if(!targetPos.anglesSet()){
-		if(!kin.calcIK(targetPos,false)) {
+		if(!kin.calcIK(targetPos, false)) {
 			cout<<"Invalid target\n";
 			return false;
 		}
@@ -144,7 +144,7 @@ bool MovementController::setTargetPosition(FullPosition targetPos){
 	bool resFlag = true;
 	if(targetPos.position.isNull()) resFlag = sendPosition(targetPos);
 	else {
-		vector<FullPosition> targetVec = setTrajectoryAngles(targetPos,currentPos);
+		vector<FullPosition> targetVec = setTrajectoryAngles(targetPos,currentPos,gripperClosed);
 		vector<int> sendRes = sendPositions(targetVec);
 		if(sendRes.size()>0) {
 			for(auto it=sendRes.begin(); it != sendRes.end(); ++it) {
@@ -161,7 +161,7 @@ bool MovementController::setTargetPosition(FullPosition targetPos){
 //	return sendPosition(targetPos);
 }
 
-vector<FullPosition> MovementController::setTrajectoryAngles(FullPosition target, FullPosition current) {
+vector<FullPosition> MovementController::setTrajectoryAngles(FullPosition target, FullPosition current, bool gripperClosed) {
 
 	vector<FullPosition> targetVec;
 	if((target.position == current.position && target.orientation == current.orientation)||(target.angles == current.angles)) {
@@ -170,7 +170,9 @@ vector<FullPosition> MovementController::setTrajectoryAngles(FullPosition target
 		array<double,6> incVals;
 		for(int i=0; i<NO_ACTUATORS-1;++i) {
 				incVals[i] = (target.angles[i]-current.angles[i])/(double)TARGET_ITERS;
-				almostZeroFix(incVals[i],incVals[i]);
+				if(almostZeroFix(incVals[i],FLOAT_PRECISION)){
+					incVals[i] = 0;
+				}
 		}
 		sendFile<<"****************************\nCurrent\t"<<current<<endl;
 		sendFile<<"Target\t"<<target<<"\n";
@@ -185,6 +187,7 @@ vector<FullPosition> MovementController::setTrajectoryAngles(FullPosition target
 			for(int j=0;j<NO_ACTUATORS-1;++j) {
 				temp.angles[j] = currentPos.angles[j] + i*incVals[j];
 			}
+			if(gripperClosed) temp.angles[NO_ACTUATORS-1] = toRadians(1);
 			targetVec.push_back(temp);
 		}
 	}
@@ -235,17 +238,60 @@ vector<FullPosition> MovementController::setTrajectorySimple(FullPosition target
 	return targetVec;
 }
 
-bool MovementController::initBlockGrab(FullPosition pos) {
+bool MovementController::initBlockGrab(FullPosition pos, double angle) {
 	FullPosition blockLoc = FullPosition(pos);
-//	blockLoc.position.x += 5;
-	blockLoc.orientation.y = toRadians(90);
-	blockLoc.position.z -= WRIST_LENGTH;
-	blockLoc.angles.null();
+#ifdef SET_MOVE
+	double ja[NO_ACTUATORS] = {0,29,2,0,70,81,0};
+	blockLoc.angles = JointAngles(ja);
+	cout<<"Starting block grab "<<endl;
+	setTargetPosition(blockLoc);
+	this_thread::sleep_for(chrono::milliseconds(1000));
+	blockLoc.angles[NO_ACTUATORS-1] = toRadians(1);
+	sendPosition(blockLoc);
+	this_thread::sleep_for(chrono::milliseconds(1000));
+	blockLoc.position = MyPoint(HOME_X_POS,HOME_Y_POS,HOME_Z_POS);
+	blockLoc.orientation.null();
 	kin.calcIK(blockLoc, false);
-	cout<<"Starting block grab with pos\t"<<blockLoc;
-	return setTargetPosition(blockLoc);
+	blockLoc.angles[NO_ACTUATORS-1] = toRadians(1);
+	setTargetPosition(blockLoc,true);
+	this_thread::sleep_for(chrono::milliseconds(3000));
+#else
+
+		blockLoc.position.x += WRIST_LENGTH;
+//		blockLoc.position.z += 20;
+		blockLoc.angles.null();
+		cout<<"Starting grab move - \n";
+		kin.calcIK(blockLoc,false, false);
+//		cout<<blockLoc<<endl;
+		if(setTargetPosition(blockLoc)){
+//			cout<<"GRAB Move 1 success"<<endl;
+			this_thread::sleep_for(chrono::milliseconds(2000));
+			blockLoc.orientation.y = toRadians(80);
+			blockLoc.orientation.x = toRadians(angle);
+			blockLoc.position.z -= (WRIST_LENGTH+107);
+			blockLoc.position.x -= (WRIST_LENGTH*0.8);
+			blockLoc.angles.null();
+			kin.calcIK(blockLoc, false, false);
+//			cout<<blockLoc<<endl;
+			if(setTargetPosition(blockLoc)) {
+//				cout<<" grab move 2 success\n";
+				this_thread::sleep_for(chrono::milliseconds(500));
+				setTargetPosition(blockLoc,true);
+				this_thread::sleep_for(chrono::milliseconds(500));
+				return placeOperation();
+			}
+		}
+#endif
+	return false;
 }
 
+bool MovementController::placeOperation(){
+	double angles[NO_ACTUATORS] = {-75,0,0,0,0,0,0};
+	JointAngles ja(angles);
+	ja[NO_ACTUATORS-1] = toRadians(1);
+	FullPosition fp(ja);
+	return setTargetPosition(fp,true);
+}
 
 void MovementController::generateCalibTargetFile(string fileName){
 	ofstream file(fileName);

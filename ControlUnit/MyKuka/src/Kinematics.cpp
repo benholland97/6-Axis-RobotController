@@ -75,7 +75,6 @@ void Kinematics::fillTransMatrix(MyPoint p, Rotation r, Matrix& m) {
 			0,			0,							0,							1 });
 }
 
-
 void Kinematics::calcFK(FullPosition& fp) {
 	setup();
     Matrix T01,T12,T23,T34,T45,T56;
@@ -119,17 +118,31 @@ void Kinematics::calcFK(FullPosition& fp) {
 //	curAngles = fp.angles;
 }
 
-bool Kinematics::calcIK(FullPosition& fp, bool setAngles) {
+bool Kinematics::calcIK(FullPosition& fp, bool print, bool setAngles) {
 	setup();
 	IKCandidates solutions;
 	calcIKSolutions(fp, solutions);
 
+	if(print) {
+		cout<<"*******************\nKinematics"<<endl;
+		for(int i=0; i<solutions.size(); ++i) {
+			cout<<solutions[i]<<endl;
+		}
+		cout<<"*******************"<<endl;
+	}
+
+
 	if(solutionValidityCheck(solutions)) {
+
 		if(solutions.size() == 1) {
 			fp.angles = solutions[0].ja;
 		} else {
 			fp.angles = optimalSolutionCheck(solutions).ja;
 		}
+		almostZeroFix(fp.angles.a, NO_ACTUATORS, FLOAT_PRECISION);
+//		cout<<"Kinematics \n"<<fp<<endl;
+//		cout<<fp;
+
 	} else {
 		return false;
 	}

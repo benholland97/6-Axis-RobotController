@@ -228,7 +228,7 @@ vector<Point3f> ImageProcessor::getCornersInCameraWorld(double side, Vec3d rvec,
 bool ImageProcessor::pixelToWorldCoordinates(Point2f pixel, Point3f &world){
 //	if(!ready()) return false;
 
-	Mat uvPoint = cv::Mat::ones(3,1,cv::DataType<double>::type); //u,v,1
+	Mat uvPoint = cv::Mat::ones(3,1,cv::DataType<double>::type); 	//u,v,1
 	uvPoint.at<double>(0,0) = (double) pixel.x;
 	uvPoint.at<double>(1,0) = (double) pixel.y;
 	uvPoint.at<double>(2,0) = 1.0;
@@ -245,8 +245,6 @@ bool ImageProcessor::pixelToWorldCoordinates(Point2f pixel, Point3f &world){
 	Point3f realPoint(wcPoint.at<double>(1, 0), wcPoint.at<double>(0, 0), wcPoint.at<double>(2, 0));
 
 	world = realPoint;
-
-//	cout<<"Pixel Point "<<pixel<<" translates to "<<world<<" in world coords"<<endl;
 
 	return true;
 }
@@ -395,7 +393,7 @@ bool ImageProcessor::rectDetect(vector<RotatedRect>& rects, Mat imgSrc, int cann
 	        }
         }
 //        imshow("Contours",drawing);
-        waitKey(10);
+//        waitKey(10);
         return true;
 
     }
@@ -419,8 +417,9 @@ FullPosition ImageProcessor::rectToRealPos(RectWithType rect) {
 	Point3f world;
 	pixelToWorldCoordinates(rect.rect.center,world);
 //	world.z = zOffset;
-	world.z = 150.0;
-	FullPosition fp(MyPoint(world.x,world.y,world.z),Rotation(0,0,toRadians(0)));
+	world.z = BLK_GRB_HEIGHT;
+	FullPosition fp(MyPoint(world.x,world.y,world.z),Rotation(0,0,0));
+//	cout<<"Target yaw: \t"<<(rect.rect.angle)<<endl;
 //	FullPosition fp(MyPoint(world.x,world.y,world.z),Rotation(0,0,toRadians(rect.rect.angle)));
 
 
@@ -451,7 +450,7 @@ bool ImageProcessor::filterBlockDetection(vector<RotatedRect> inRects, RectWithT
 			line( drawing, rectPoints[j], rectPoints[(j+1)%4], colour );
 		}
 	}
-	imshow("Filtered rects",drawing);
+//	imshow("Filtered rects",drawing);
 
 	return optimalRectSearch(correctRects, idealRect, pWidth, pHeight, pDepth);
 
@@ -668,11 +667,11 @@ bool ImageProcessor::userAction(MovementController& mc){
     createTrackbar("J4:","Workspace",&tempJAUpper, tempJAUpper*2, trackBarJointAngles, new ActuatorNum(A4));
     createTrackbar("J5:","Workspace",&tempJAUpper, tempJAUpper*2, trackBarJointAngles, new ActuatorNum(A5));
     createTrackbar("J6:","Workspace",&gripperLower, 1, trackBarJointAngles, new ActuatorNum(A6));
-
+    tbJointAngles.isReady = false;
     double idealWidth, idealHeight, idealDepth;
     vector<Point2f> idealBlockFaces = calcIdealBlockFacesImg(idealWidth, idealHeight, idealDepth);
 //    mc.moveHome();
-//	this_thread::sleep_for(chrono::milliseconds(3000));
+//	this_thread::sleep_for(chrono::milliseconds(2000));
 
 	autoMode = false;
 #ifdef TRGT_MOVE
@@ -691,7 +690,6 @@ bool ImageProcessor::userAction(MovementController& mc){
 
     while(cap->grab()) {
     	cout<<flush;
-    	tbJointAngles.isReady = false;
     	Mat distFrame, frame;
     	cap->retrieve(distFrame);
     	undistort(distFrame,frame,camMatrix,distCoeffs);
@@ -712,11 +710,18 @@ bool ImageProcessor::userAction(MovementController& mc){
     				thread sleepThread(&ImageProcessor::targetSetDelay, this, TRGT_MV_DLY);
     				sleepThread.detach();
     				if(mc.setTargetPosition(targetPos)) {
-    					this_thread::sleep_for(chrono::milliseconds(1000));
-    					mc.initBlockGrab(targetPos);
+    					this_thread::sleep_for(chrono::milliseconds(2000));
+    					if(mc.initBlockGrab(targetPos, targetRect.rect.angle)) {
+    						cout<<"Grab success";
+    					};
     				}
     //				break;
                 }
+//            	this_thread::sleep_for(chrono::milliseconds(1000));
+//                mc.moveHome();
+//            	this_thread::sleep_for(chrono::milliseconds(2000));
+////            	homeMoveFlag = true;
+//            	readyForNewImgFlag = true;
             }
 
             if(homeMoveFlag) {
@@ -724,8 +729,6 @@ bool ImageProcessor::userAction(MovementController& mc){
             }
         }
 //        if(userData.imgOut.data) imshow("Edges", userData.imgOut);
-
-
         if(tbJointAngles.isReady){
         	targetPos = FullPosition(JointAngles(tbJointAngles.angles));
         	targetSet = true;

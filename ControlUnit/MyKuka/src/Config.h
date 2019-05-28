@@ -32,18 +32,18 @@
 #define REST_Y_POS		0
 #define REST_Z_POS		220
 
-#define BLK_GRB_HEIGHT	150
+#define BLK_GRB_HEIGHT	240
 
 #define HOME_X_POS		85
 #define HOME_Y_POS		0
 #define HOME_Z_POS		210
 
 #define ANGLE0_OFFSET	0
-#define ANGLE1_OFFSET	60
-#define ANGLE2_OFFSET	-3
-#define ANGLE3_OFFSET	-16
-#define ANGLE4_OFFSET	15
-#define ANGLE5_OFFSET	7
+#define ANGLE1_OFFSET	0
+#define ANGLE2_OFFSET	0
+#define ANGLE3_OFFSET	0
+#define ANGLE4_OFFSET	0
+#define ANGLE5_OFFSET	0
 
 
 
@@ -71,9 +71,9 @@
 #define BLOCK_DEPTH		15
 #define BLOCK_TOLERANCE 30
 
-#define TRGT_MV_DLY		10000
+#define TRGT_MV_DLY		15000
 
-//#define TRGT_MOVE
+#define TRGT_MOVE
 
 //------SERIAL-------
 #define DEF_ARD_PTH		"/dev/ttyUSB0"
@@ -81,8 +81,9 @@
 #define SERIAL_TIMEOUT	1000
 
 //------TRAJECTORY-------
-#define TARGET_ITERS	30
+#define TARGET_ITERS	10
 #define TGT_ANGLE_THRESH	20
+//#define SET_MOVE
 
 //------CALIBRATION-------
 //#define ARM_CALIBRATION

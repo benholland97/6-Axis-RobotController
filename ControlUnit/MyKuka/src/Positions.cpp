@@ -61,12 +61,12 @@ bool JointAngles::limitsCheck() {
 	double maxLower = toRadians(MG996R_MAX_ANGLE);
 	double maxUpper = toRadians(MG90S_MAX_ANGLE);
 	for(int i=0; i<NO_MG996R; ++i) {
-		if((a[i]+offsets[i]) > maxLower || (a[i]+offsets[i]) < -maxLower) {
+		if(a[i] > (maxLower+offsets[i]) || a[i] < (-maxLower+offsets[i])) {
 			return false;
 		}
 	}
 	for(int i=NO_MG996R; i<NO_ACTUATORS; ++i) {
-		if((a[i]+offsets[i]) > maxUpper || (a[i]+offsets[i]) < -maxUpper) {
+		if(a[i] > (maxUpper+offsets[i]) || a[i] < (-maxUpper+offsets[i])) {
 			return false;
 		}
 	}
